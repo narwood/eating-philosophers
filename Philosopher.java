@@ -1,8 +1,17 @@
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Lock;
+
 public class Philosopher implements Runnable {
     private final String name; 
+    private final Semaphore left_fork;
+    private final Semaphore right_fork;
+    private final Lock lock;
 
-    public Philosopher(int i) {
+    public Philosopher(int i, Lock lock, Semaphore[] forks) {
         name = "Philosopher" + Integer.toString(i);
+        left_fork = forks[i];
+        right_fork = forks[(i+1) % 5];
+        this.lock = lock;
     } 
 
     public void print(String msg) {
@@ -19,6 +28,14 @@ public class Philosopher implements Runnable {
     };
     public void take() {
         print("trying to take forks");
+
+        lock.lock();
+        try { left_fork.acquire(); }
+        catch (InterruptedException e) { }
+        try { right_fork.acquire(); }
+        catch (InterruptedException e) { }
+        lock.unlock();
+
         print("obtained forks");
     };
     public void eat() {
@@ -31,6 +48,10 @@ public class Philosopher implements Runnable {
     };
     public void drop() {
         print("dropping forks");
+
+        left_fork.release();
+        right_fork.release();
+
         print("dropped forks");
     };
 
@@ -45,5 +66,3 @@ public class Philosopher implements Runnable {
     }
 
 }
-
-
